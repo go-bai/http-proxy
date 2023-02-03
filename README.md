@@ -5,7 +5,7 @@
 ### Run with docker
 
 ```bash
-docker run -d -p 8888:8888 --restart always --name http-proxy gobai/http-proxy:v0.0.1
+docker run -d --net=host -e HTTP_PROXY_LISTEN_ADDR=":8888" --restart always --name http-proxy gobai/http-proxy:v0.1.1
 ```
 
 ### Test
