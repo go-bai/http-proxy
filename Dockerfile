@@ -13,7 +13,8 @@ RUN go mod tidy && go build -ldflags "-s -w" -o main
 FROM alpine
 
 RUN  apk --update --no-cache add tzdata ca-certificates \
-    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && mkdir -p conf && touch conf/whitelist
 COPY --from=builder /build/main /
 
 ENTRYPOINT ["/main"]

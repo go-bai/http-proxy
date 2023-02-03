@@ -23,6 +23,13 @@ $ http_proxy=4.4.4.4:8888 curl ip.sb
 
 The ip whitelist file is located in `conf/whitelist`.
 
+example:
+
+```bash
+127.0.0.1/32
+1.1.1.1/32
+```
+
 ## Environment Variable
 
 | key | default |
