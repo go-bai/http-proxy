@@ -144,13 +144,14 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%-21s %-7s %s %s", r.RemoteAddr, r.Method, r.Host, r.URL.Path)
 	addrPort, err := netip.ParseAddrPort(r.RemoteAddr)
 	if err != nil {
 		log.Printf("parse addrPort %s failed: %s", r.RemoteAddr, err.Error())
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("%-15s %-7s %s %s", addrPort.Addr(), r.Method, r.Host, r.URL.Path)
 
 	ok := true
 	whitelist.Range(func(k, v any) bool {
