@@ -2,10 +2,18 @@
 
 ## Quick Start
 
-### Run with docker
+### Get the latest tag
 
 ```bash
-docker run -d --net=host -e HTTP_PROXY_LISTEN_ADDR=":8888" --restart always --name http-proxy gobai/http-proxy:v0.1.6
+apt/yum install jq -y
+TAG=`curl -s GET https://api.github.com/repos/go-bai/http-proxy/tags\?per_page=1 | jq -r '.[].name'`
+echo $TAG
+```
+
+### Run with Docker
+
+```bash
+docker run --rm --net=host --name http-proxy gobai/http-proxy:$TAG
 ```
 
 ### Test
@@ -33,7 +41,7 @@ example:
 ```bash
 mkdir -p http-proxy-conf
 echo '127.0.0.1/32' > http-proxy-conf/whitelist
-docker run -d --net=host -e HTTP_PROXY_LISTEN_ADDR=":8888" -v ${PWD}/http-proxy-conf:/conf --restart always --name http-proxy gobai/http-proxy:v0.1.6
+docker run -d --net=host -e HTTP_PROXY_LISTEN_ADDR=":8888" -v ${PWD}/http-proxy-conf:/conf --restart always --name http-proxy gobai/http-proxy:$TAG
 ```
 
 ## Environment Variable
