@@ -1,5 +1,7 @@
 FROM golang:1.20-alpine AS builder
 RUN apk --no-cache add tzdata
+ENV GO111MODULE=on \
+    CGO_ENABLED=0
 WORKDIR /build
 COPY . .
 RUN go mod tidy && go build -ldflags "-s -w" -o main

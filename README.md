@@ -5,7 +5,7 @@
 ### Run with docker
 
 ```bash
-docker run -d --net=host -e HTTP_PROXY_LISTEN_ADDR=":8888" --restart always --name http-proxy gobai/http-proxy:v0.1.1
+docker run -d --net=host -e HTTP_PROXY_LISTEN_ADDR=":8888" --restart always --name http-proxy gobai/http-proxy:v0.1.6
 ```
 
 ### Test
@@ -28,6 +28,12 @@ example:
 ```bash
 127.0.0.1/32
 1.1.1.1/32
+```
+
+```bash
+mkdir -p http-proxy-conf
+echo '127.0.0.1/32' > http-proxy-conf/whitelist
+docker run -d --net=host -e HTTP_PROXY_LISTEN_ADDR=":8888" -v ${PWD}/http-proxy-conf:/conf --restart always --name http-proxy gobai/http-proxy:v0.1.6
 ```
 
 ## Environment Variable

@@ -20,10 +20,6 @@ jobs:
       env:
         DOCKER_USER: ${{ secrets.DOCKER_USER }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
-        CGO_ENABLED: 0
-        GO111MODULE: on
       run: |
         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - name: Build and Push the Docker image
@@ -32,3 +28,5 @@ jobs:
         --tag ${{ secrets.DOCKER_USER }}/http-proxy:$GITHUB_REF_NAME 
         --file Dockerfile 
         --push .
+    - name: Docker Logout
+      run: docker logout
