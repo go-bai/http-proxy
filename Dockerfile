@@ -1,20 +1,14 @@
 FROM golang:1.20 AS builder
-
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
-
+RUN apk --no-cache add tzdata
 WORKDIR /build
 COPY . .
 RUN go mod tidy && go build -ldflags "-s -w" -o main
 
 
-FROM alpine
-
-RUN  apk --update --no-cache add tzdata ca-certificates \
-    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && mkdir -p conf && touch conf/whitelist
+FROM scratch
+COPY --from=builder /user/share/zoneinfo /user/share/zoneinfo
+COPY --from=builder /build/conf conf
 COPY --from=builder /build/main /
+ENV TZ=Asia/Shanghai
 
 ENTRYPOINT ["/main"]
