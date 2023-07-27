@@ -83,15 +83,6 @@ func basicProxyAuth(proxyAuth string) (username, password string, ok bool) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	addrPort, err := netip.ParseAddrPort(r.RemoteAddr)
-	if err != nil {
-		log.Printf("parse addrPort %s failed: %s", r.RemoteAddr, err.Error())
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
-
-	log.Printf("%-15s %-7s %s %s", addrPort.Addr(), r.Method, r.Host, r.URL.Path)
-
 	if auth == authOn {
 		_, p, ok := basicProxyAuth(r.Header.Get("Proxy-Authorization"))
 		if !ok {
@@ -106,6 +97,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 		r.Header.Del("Proxy-Authorization")
 	}
+
+	addrPort, err := netip.ParseAddrPort(r.RemoteAddr)
+	if err != nil {
+		log.Printf("parse addrPort %s failed: %s", r.RemoteAddr, err.Error())
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("%-15s %-7s %s %s", addrPort.Addr(), r.Method, r.Host, r.URL.Path)
 
 	if r.Method == http.MethodConnect {
 		handleTunneling(w, r)
