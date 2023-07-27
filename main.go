@@ -86,7 +86,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if auth == authOn {
 		_, p, ok := basicProxyAuth(r.Header.Get("Proxy-Authorization"))
 		if !ok {
-			w.Header().Set("Proxy-Authenticate", `Basic realm=go`)
+			w.Header().Set("Proxy-Authenticate", `Basic realm=Restricted`)
 			http.Error(w, "proxy auth required", http.StatusProxyAuthRequired)
 			return
 		}
