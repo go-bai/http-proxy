@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"crypto/tls"
-	"fmt"
+	"encoding/base64"
 	"io"
 	"log"
 	"net"
@@ -11,10 +10,9 @@ import (
 	"net/netip"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
+	"github.com/google/uuid"
 )
 
 func handleTunneling(w http.ResponseWriter, r *http.Request) {
@@ -63,84 +61,25 @@ func copyHeader(dst, src http.Header) {
 	}
 }
 
-var (
-	whitelist     sync.Map
-	whitelistName = "conf/whitelist"
-	whitelistPath = "conf"
-)
-
-func listenWhitelist() {
-	log.Printf("start watching %s...", whitelistName)
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Printf("watch %s failed: %s", whitelistName, err.Error())
+func basicProxyAuth(proxyAuth string) (username, password string, ok bool) {
+	if proxyAuth == "" {
 		return
 	}
-	defer watcher.Close()
-	defer log.Printf("watcher closed!!!")
 
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				if event.Has(fsnotify.Write) && event.Name == whitelistName {
-					updateWhitelist()
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("watcher error:", err)
-			}
-		}
-	}()
-
-	err = watcher.Add(whitelistPath)
+	if !strings.HasPrefix(proxyAuth, "Basic ") {
+		return
+	}
+	c, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(proxyAuth, "Basic "))
 	if err != nil {
-		log.Fatalf("watcher add %s failed: %s", whitelistName, err)
+		return
+	}
+	cs := string(c)
+	s := strings.IndexByte(cs, ':')
+	if s < 0 {
+		return
 	}
 
-	<-make(chan struct{})
-}
-
-func updateWhitelist() {
-	log.Printf("start loading %s...", whitelistName)
-	defer log.Printf("%s has been loaded.", whitelistName)
-	f, err := os.Open(whitelistName)
-	if err != nil {
-		log.Fatalf("open file %s failed: %s", whitelistName, err)
-	}
-	defer f.Close()
-
-	newWhitelist := make(map[string]struct{}, 0)
-
-	scanner := bufio.NewScanner(f)
-	for i := 0; scanner.Scan(); i++ {
-		line := strings.TrimSpace(scanner.Text())
-		ipPrefix, err := netip.ParsePrefix(line)
-		if err != nil {
-			log.Printf("line %d: \"%s\" parse failed: %s", i, line, err.Error())
-		}
-		newWhitelist[line] = struct{}{}
-		whitelist.Store(line, ipPrefix)
-	}
-
-	whitelist.Range(func(key, value any) bool {
-		if _, ok := newWhitelist[key.(string)]; !ok {
-			whitelist.Delete(key)
-		}
-		return true
-	})
-}
-
-func init() {
-
-	updateWhitelist()
-
-	go listenWhitelist()
+	return cs[:s], cs[s+1:], true
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -153,19 +92,19 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("%-15s %-7s %s %s", addrPort.Addr(), r.Method, r.Host, r.URL.Path)
 
-	ok := true
-	whitelist.Range(func(k, v any) bool {
-		ok = !ok
-		if ok = v.(netip.Prefix).Contains(addrPort.Addr()); ok {
-			return false
+	if auth == authOn {
+		_, p, ok := basicProxyAuth(r.Header.Get("Proxy-Authorization"))
+		if !ok {
+			w.Header().Set("Proxy-Authenticate", `Basic realm=go`)
+			http.Error(w, "proxy auth required", http.StatusProxyAuthRequired)
+			return
 		}
-		return true
-	})
 
-	if !ok {
-		log.Printf("ip \"%s\" not configed in IPWhitelist", addrPort.Addr())
-		http.Error(w, fmt.Sprintf("ip \"%s\" not configed in IPWhitelist", addrPort.Addr()), http.StatusForbidden)
-		return
+		if p != pass {
+			http.Error(w, "proxy authentication failed", http.StatusForbidden)
+			return
+		}
+		r.Header.Del("Proxy-Authorization")
 	}
 
 	if r.Method == http.MethodConnect {
@@ -175,16 +114,45 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
-	httpProxyListenAddr := ":8888"
-	s, b := os.LookupEnv("HTTP_PROXY_LISTEN_ADDR")
+var (
+	addr = ":38888"
+	auth = "on"
+	pass = ""
+)
+
+const (
+	authOn  = "on"
+	authOff = "off"
+)
+
+func init() {
+	addrEnv, b := os.LookupEnv("HTTP_PROXY_ADDR")
 	if b {
-		httpProxyListenAddr = s
+		addr = addrEnv
+	}
+	authEnv, b := os.LookupEnv("HTTP_PROXY_AUTH")
+	if b {
+		auth = authEnv
+	}
+	if auth == authOn {
+		passEnv, b := os.LookupEnv("HTTP_PROXY_PASS")
+		if b {
+			pass = passEnv
+		} else {
+			pass = uuid.New().String()
+		}
+	}
+}
+
+func main() {
+	log.Printf("Listen on: %s\n", addr)
+	log.Printf("Auth: %s\n", auth)
+	if auth == authOn {
+		log.Printf("Password: %s\n", pass)
 	}
 
-	log.Printf("Listen on %s", httpProxyListenAddr)
 	server := &http.Server{
-		Addr:    httpProxyListenAddr,
+		Addr:    addr,
 		Handler: http.HandlerFunc(handler),
 		// Disable HTTP/2.
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),

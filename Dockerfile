@@ -10,7 +10,6 @@ RUN go mod tidy && go build -ldflags "-s -w" -o main && upx -9 main
 
 FROM scratch
 COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-COPY --from=builder /build/conf conf
 COPY --from=builder /build/main /
 
 ENTRYPOINT ["/main"]

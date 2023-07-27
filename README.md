@@ -16,39 +16,19 @@ echo $TAG
 docker run --rm --net=host --name http-proxy gobai/http-proxy:$TAG
 ```
 
-### Test
-
-if your local ip is 2.2.2.2 and your http-proxy server ip is 4.4.4.4
+### custom password
 
 ```bash
-$ curl ip.sb
-2.2.2.2
-$ http_proxy=4.4.4.4:8888 curl ip.sb
-4.4.4.4
-```
-
-### IP Whitelist
-
-The ip whitelist file is located in `conf/whitelist`.
-
-example:
-
-```bash
-127.0.0.1/32
-1.1.1.1/32
-```
-
-```bash
-mkdir -p http-proxy-conf
-echo '127.0.0.1/32' > http-proxy-conf/whitelist
-docker run -d --net=host -e HTTP_PROXY_LISTEN_ADDR=":8888" -v ${PWD}/http-proxy-conf:/conf --restart always --name http-proxy gobai/http-proxy:$TAG
+docker run -d --net=host -e HTTP_PROXY_PASS="xxx" --restart always --name http-proxy gobai/http-proxy:$TAG
 ```
 
 ## Environment Variable
 
 | key | default |
 | --- | - |
-| `HTTP_PROXY_LISTEN_ADDR` | `:8888` |
+| `HTTP_PROXY_ADDR` | `:38888` |
+| `HTTP_PROXY_AUTH` | `on`    |
+| `HTTP_PROXY_PASS` | ``      |
 
 ## Credits
 
