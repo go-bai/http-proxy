@@ -5,8 +5,12 @@ on:
     tags:
       - '*'
 
-jobs:
+env:
+  GHCR_REGISTRY: ghcr.io
+  GHCR_USER: go-bai
+  APP_NAME: http-proxy
 
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
@@ -18,18 +22,18 @@ jobs:
       run: docker buildx create
         --name=multi-builder
         --driver=docker-container
+        --platform=linux/arm64,linux/amd64
         --use
         --bootstrap
     - name: Docker Login
       env:
-        DOCKER_USER: ${{ secrets.DOCKER_USER }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
       run: |
-        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+        echo ${{ env.GHCR_TOKEN }} | docker login ${{ env.GHCR_REGISTRY }} --username ${{ env.GHCR_USER }} --password-stdin
     - name: Build and Push the Docker image
       run: docker buildx build
         --platform=linux/arm64,linux/amd64
-        --tag ${{ secrets.DOCKER_USER }}/http-proxy:$GITHUB_REF_NAME
+        --tag ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_USER }}/${{ env.APP_NAME }}:$GITHUB_REF_NAME
         --file Dockerfile
         --push .
     - name: Docker Logout
