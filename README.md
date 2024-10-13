@@ -13,13 +13,13 @@ echo $TAG
 ### Run with Docker
 
 ```bash
-docker run --rm --net=host --name http-proxy gobai/http-proxy:$TAG
+docker run --rm --net=host --name http-proxy ghcr.io/go-bai/http-proxy:$TAG
 ```
 
 ### custom password
 
 ```bash
-docker run -d --net=host -e HTTP_PROXY_PASS="xxx" --restart always --name http-proxy gobai/http-proxy:$TAG
+docker run -d --net=host -e HTTP_PROXY_PASS="xxx" --restart always --name http-proxy ghcr.io/go-bai/http-proxy:$TAG
 ```
 
 ## Environment Variable

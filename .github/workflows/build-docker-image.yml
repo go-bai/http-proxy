@@ -37,4 +37,4 @@ jobs:
         --file Dockerfile
         --push .
     - name: Docker Logout
-      run: docker logout
+      run: docker logout ${{ env.GHCR_REGISTRY }}
