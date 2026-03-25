@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	addr = ":38888"
-	auth = "on"
-	pass = ""
+	addr      = ":38888"
+	socks5Addr = ":38889"
+	auth      = "on"
+	pass      = ""
 )
 
 const (
@@ -29,6 +30,10 @@ func init() {
 	addrEnv, b := os.LookupEnv("HTTP_PROXY_ADDR")
 	if b {
 		addr = addrEnv
+	}
+	socks5AddrEnv, b := os.LookupEnv("SOCKS5_PROXY_ADDR")
+	if b {
+		socks5Addr = socks5AddrEnv
 	}
 	authEnv, b := os.LookupEnv("HTTP_PROXY_AUTH")
 	if b {
@@ -78,10 +83,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Printf("Listen on: %s\n", addr)
+	log.Printf("Socks5 listen on: %s\n", socks5Addr)
 	log.Printf("Auth: %s\n", auth)
 	if auth == authOn {
 		log.Printf("Password: %s\n", pass)
 	}
+
+	socks5Server := &pkg.Socks5Server{
+		AuthEnabled: auth == authOn,
+		Password:    pass,
+	}
+	go pkg.ListenAndServeSocks5(socks5Addr, socks5Server)
 
 	go func() {
 		for {

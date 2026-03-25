@@ -1,4 +1,4 @@
-# simple and useful http proxy
+# simple and useful http/socks5 proxy
 
 ## Quick Start
 
@@ -27,6 +27,7 @@ docker run -d --net=host -e HTTP_PROXY_PASS="xxx" --restart always --name http-p
 | key | default |
 | --- | - |
 | `HTTP_PROXY_ADDR` | `:38888` |
+| `SOCKS5_PROXY_ADDR` | `:38889` |
 | `HTTP_PROXY_AUTH` | `on`    |
 | `HTTP_PROXY_PASS` | ``      |
 
