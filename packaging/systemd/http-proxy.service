@@ -1,0 +1,21 @@
+[Unit]
+Description=HTTP and SOCKS5 proxy
+Documentation=https://github.com/go-bai/http-proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/http-proxy
+ExecStart=/usr/bin/http-proxy
+Restart=on-failure
+RestartSec=3s
+TimeoutStopSec=30s
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+
+[Install]
+WantedBy=multi-user.target

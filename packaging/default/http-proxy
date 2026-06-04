@@ -1,0 +1,7 @@
+HTTP_PROXY_ADDR=:38888
+SOCKS5_PROXY_ADDR=:38889
+HTTP_PROXY_AUTH=on
+
+# Set this before starting the service. If omitted while auth is on, the
+# process generates a random password and writes it to the journal on start.
+# HTTP_PROXY_PASS=replace-with-a-strong-password

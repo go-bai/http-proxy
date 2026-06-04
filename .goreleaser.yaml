@@ -1,0 +1,55 @@
+version: 2
+
+project_name: http-proxy
+
+before:
+  hooks:
+    - go test ./...
+
+builds:
+  - id: http-proxy
+    main: .
+    binary: http-proxy
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+
+nfpms:
+  - id: deb
+    ids:
+      - http-proxy
+    package_name: http-proxy
+    file_name_template: "{{ .ConventionalFileName }}"
+    vendor: go-bai
+    homepage: https://github.com/go-bai/http-proxy
+    maintainer: go-bai
+    description: Simple HTTP and SOCKS5 proxy.
+    license: MIT
+    section: net
+    priority: optional
+    formats:
+      - deb
+    bindir: /usr/bin
+    contents:
+      - src: packaging/systemd/http-proxy.service
+        dst: /lib/systemd/system/http-proxy.service
+        file_info:
+          mode: 0644
+      - src: packaging/default/http-proxy
+        dst: /etc/default/http-proxy
+        type: config|noreplace
+        file_info:
+          mode: 0600
+    scripts:
+      postinstall: packaging/scripts/postinstall.sh
+      preremove: packaging/scripts/preremove.sh
+      postremove: packaging/scripts/postremove.sh
+
+checksum:
+  name_template: checksums.txt
